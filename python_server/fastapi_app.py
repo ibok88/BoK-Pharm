@@ -61,7 +61,7 @@ async def health_check():
 @app.get("/medications", response_model=List[Dict[str, Any]])
 async def get_medications():
     try:
-        response = supabase.table("medications").select("*").execute()
+        response = supabase.table("medication").select("*").execute()
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -69,7 +69,7 @@ async def get_medications():
 @app.get("/medications/{medication_id}", response_model=Dict[str, Any])
 async def get_medication(medication_id: str):
     try:
-        response = supabase.table("medications").select("*").eq("id", medication_id).execute()
+        response = supabase.table("medication").select("*").eq("id", medication_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Medication not found")
         return response.data[0]
@@ -81,7 +81,7 @@ async def get_medication(medication_id: str):
 @app.get("/pharmacies", response_model=List[Dict[str, Any]])
 async def get_pharmacies():
     try:
-        response = supabase.table("pharmacies").select("*").eq("is_active", True).execute()
+        response = supabase.table("pharmacy").select("*").eq("is_active", True).execute()
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -89,7 +89,7 @@ async def get_pharmacies():
 @app.get("/pharmacies/{pharmacy_id}", response_model=Dict[str, Any])
 async def get_pharmacy(pharmacy_id: str):
     try:
-        response = supabase.table("pharmacies").select("*").eq("id", pharmacy_id).execute()
+        response = supabase.table("pharmacy").select("*").eq("id", pharmacy_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Pharmacy not found")
         return response.data[0]
@@ -142,7 +142,7 @@ async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_curr
         
         cart = cart_response.data[0]
         
-        med_response = supabase.table("medications").select("*").eq("id", request.medication_id).execute()
+        med_response = supabase.table("medication").select("*").eq("id", request.medication_id).execute()
         if not med_response.data:
             raise HTTPException(status_code=404, detail="Medication not found")
         
@@ -244,7 +244,7 @@ class SyncUserRequest(BaseModel):
 @app.post("/auth/sync-user")
 async def sync_user(request: SyncUserRequest):
     try:
-        existing = supabase.table("users").select("*").eq("firebase_uid", request.firebase_uid).execute()
+        existing = supabase.table("user").select("*").eq("firebase_uid", request.firebase_uid).execute()
         
         if existing.data:
             return existing.data[0]
@@ -262,7 +262,7 @@ async def sync_user(request: SyncUserRequest):
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            response = supabase.table("users").insert(new_user).execute()
+            response = supabase.table("user").insert(new_user).execute()
             return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -270,7 +270,7 @@ async def sync_user(request: SyncUserRequest):
 @app.get("/auth/user")
 async def get_user(user_id: str = Depends(get_current_user)):
     try:
-        response = supabase.table("users").select("*").eq("firebase_uid", user_id).execute()
+        response = supabase.table("user").select("*").eq("firebase_uid", user_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
         return response.data[0]
