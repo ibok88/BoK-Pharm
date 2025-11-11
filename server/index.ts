@@ -9,9 +9,9 @@ let pythonProcess: ChildProcess | null = null;
 
 // Start Python backend
 function startPythonBackend() {
-  log("Starting Python backend on port 5001...");
+  log("Starting Python FastAPI backend on port 5001...");
   
-  pythonProcess = spawn('python', ['app.py'], {
+  pythonProcess = spawn('uvicorn', ['fastapi_app:app', '--host', '0.0.0.0', '--port', '5001', '--reload'], {
     cwd: './python_server',
     env: { ...process.env, PORT: '5001' },
     stdio: ['ignore', 'pipe', 'pipe']
