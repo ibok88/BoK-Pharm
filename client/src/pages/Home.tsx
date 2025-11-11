@@ -7,7 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import heroImage from '@assets/stock_images/pharmacy_building_by_f55d6a17.jpg';
+import heroImage from '@assets/stock_images/modern_well-lit_phar_d45252ec.jpg';
 import medicationImage1 from '@assets/generated_images/Medication_product_bottle_39d472bc.png';
 import medicationImage2 from '@assets/generated_images/Medication_blister_pack_8ebe3161.png';
 
@@ -128,22 +128,22 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        <section className="relative rounded-lg overflow-hidden h-64 md:h-80">
+        <section className="relative rounded-lg overflow-hidden h-64 md:h-80 bg-white dark:bg-background">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroImage})` }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/85 to-white/70 dark:from-black/70 dark:to-black/40" />
           </div>
-          <div className="relative h-full flex flex-col justify-center px-6 md:px-12 text-white">
+          <div className="relative h-full flex flex-col justify-center px-6 md:px-12">
             <div className="mb-4">
-              <BoKPharmLogo className="text-white mb-2" />
+              <BoKPharmLogo className="text-primary dark:text-white mb-2" />
               <Badge className="bg-primary text-primary-foreground border-0">24 Hours Supply</Badge>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground dark:text-white">
               Your Pharmacy by the Ocean
             </h1>
-            <p className="text-lg md:text-xl text-white/90 mb-4">
+            <p className="text-lg md:text-xl text-muted-foreground dark:text-white/90 mb-4">
               Quality medications delivered 24/7
             </p>
             <div className="max-w-md">
