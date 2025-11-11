@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Pill, Clock, MapPin, Truck } from "lucide-react";
@@ -8,7 +14,7 @@ import { SiFacebook } from "react-icons/si";
 import { FcGoogle } from "react-icons/fc";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from '@assets/stock_images/modern_well-lit_phar_d45252ec.jpg';
+import heroImage from "@assets/stock_images/modern_well-lit_phar_d45252ec.jpg";
 
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
@@ -72,7 +78,7 @@ export default function Landing() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <section className="relative rounded-lg overflow-hidden h-96 md:h-[500px] mb-12 bg-white dark:bg-background">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroImage})` }}
           >
@@ -80,18 +86,19 @@ export default function Landing() {
           </div>
           <div className="relative h-full flex flex-col justify-center items-center text-center px-6">
             <div className="mb-4">
-              <BoKPharmLogo className="text-primary dark:text-white mb-4 text-4xl" />
-              <Badge className="bg-primary text-primary-foreground border-0 mb-6">24 Hours Supply</Badge>
+              <Badge className="bg-primary text-primary-foreground border-0 mb-6">
+                24 Hours Supply
+              </Badge>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-4 text-foreground dark:text-white">
-              Your Pharmacy by the Ocean
+              Your Pharmacies right next to you ...
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground dark:text-white/90 mb-8 max-w-2xl">
               Quality medications delivered to your doorstep, anytime, anywhere
             </p>
             <div className="flex flex-col gap-3 w-full max-w-sm">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={handleGoogleSignIn}
                 disabled={isSigningIn}
                 className="w-full bg-white dark:bg-card text-foreground border hover-elevate"
@@ -100,8 +107,8 @@ export default function Landing() {
                 <FcGoogle className="mr-2 h-5 w-5" />
                 Continue with Google
               </Button>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={handleFacebookSignIn}
                 disabled={isSigningIn}
                 className="w-full bg-[#1877F2] text-white hover:bg-[#1877F2]/90"
@@ -117,9 +124,11 @@ export default function Landing() {
         <section className="mb-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-4">Why Choose BoK Pharm?</h2>
-            <p className="text-muted-foreground text-lg">Your health, our priority</p>
+            <p className="text-muted-foreground text-lg">
+              Your health, our priority
+            </p>
           </div>
-          
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader>
@@ -174,11 +183,12 @@ export default function Landing() {
         <section className="text-center py-12 bg-muted rounded-lg">
           <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-muted-foreground text-lg mb-6">
-            Join thousands of customers who trust BoK Pharm for their medication needs
+            Join thousands of customers who trust BoK Pharm for their medication
+            needs
           </p>
           <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={handleGoogleSignIn}
               disabled={isSigningIn}
               className="w-full bg-white dark:bg-card text-foreground border hover-elevate"
@@ -187,8 +197,8 @@ export default function Landing() {
               <FcGoogle className="mr-2 h-5 w-5" />
               Sign up with Google
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={handleFacebookSignIn}
               disabled={isSigningIn}
               className="w-full bg-[#1877F2] text-white hover:bg-[#1877F2]/90"
