@@ -99,14 +99,14 @@ OTC_MEDICATIONS = [
 def seed_medications():
     print("Starting medication seeding...")
     
-    existing = supabase.table("medications").select("name").execute()
+    existing = supabase.table("medication").select("name").execute()
     existing_names = {med["name"] for med in existing.data}
     
     new_medications = [med for med in OTC_MEDICATIONS if med["name"] not in existing_names]
     
     if new_medications:
         print(f"Inserting {len(new_medications)} new medications...")
-        response = supabase.table("medications").insert(new_medications).execute()
+        response = supabase.table("medication").insert(new_medications).execute()
         print(f"Successfully inserted {len(response.data)} medications")
     else:
         print("All medications already exist in the database")

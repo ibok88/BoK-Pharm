@@ -1,7 +1,7 @@
 -- BoK Pharm Database Schema for Supabase
 
--- Users table
-CREATE TABLE IF NOT EXISTS users (
+-- User table (singular)
+CREATE TABLE IF NOT EXISTS user (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   email VARCHAR UNIQUE,
   first_name VARCHAR,
@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT now()
 );
 
--- Pharmacies table
-CREATE TABLE IF NOT EXISTS pharmacies (
+-- Pharmacy table (singular)
+CREATE TABLE IF NOT EXISTS pharmacy (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name TEXT NOT NULL,
   address TEXT NOT NULL,
@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS pharmacies (
   onboarding_status TEXT NOT NULL DEFAULT 'pending'
 );
 
--- Medications table (OTC only)
-CREATE TABLE IF NOT EXISTS medications (
+-- Medication table (OTC only, singular)
+CREATE TABLE IF NOT EXISTS medication (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name TEXT NOT NULL,
   strength TEXT NOT NULL,
@@ -55,12 +55,12 @@ CREATE TABLE IF NOT EXISTS inventory (
   expiry_date TIMESTAMP,
   batch_number TEXT,
   last_updated TIMESTAMP NOT NULL DEFAULT now(),
-  FOREIGN KEY (pharmacy_id) REFERENCES pharmacies(id),
-  FOREIGN KEY (medication_id) REFERENCES medications(id)
+  FOREIGN KEY (pharmacy_id) REFERENCES pharmacy(id),
+  FOREIGN KEY (medication_id) REFERENCES medication(id)
 );
 
--- Orders table
-CREATE TABLE IF NOT EXISTS orders (
+-- Order table (singular)
+CREATE TABLE IF NOT EXISTS order (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   user_id VARCHAR NOT NULL,
   pharmacy_id VARCHAR NOT NULL,
@@ -69,23 +69,23 @@ CREATE TABLE IF NOT EXISTS orders (
   delivery_address TEXT NOT NULL,
   payment_method TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  FOREIGN KEY (pharmacy_id) REFERENCES pharmacies(id)
+  FOREIGN KEY (user_id) REFERENCES user(id),
+  FOREIGN KEY (pharmacy_id) REFERENCES pharmacy(id)
 );
 
--- Order items table
-CREATE TABLE IF NOT EXISTS order_items (
+-- Order item table (singular)
+CREATE TABLE IF NOT EXISTS order_item (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   order_id VARCHAR NOT NULL,
   medication_id VARCHAR NOT NULL,
   quantity INTEGER NOT NULL,
   unit_price DECIMAL(10, 2) NOT NULL,
   subtotal DECIMAL(10, 2) NOT NULL,
-  FOREIGN KEY (order_id) REFERENCES orders(id),
-  FOREIGN KEY (medication_id) REFERENCES medications(id)
+  FOREIGN KEY (order_id) REFERENCES order(id),
+  FOREIGN KEY (medication_id) REFERENCES medication(id)
 );
 
--- Add foreign key for users.pharmacy_id (after pharmacies table is created)
-ALTER TABLE users
-ADD CONSTRAINT fk_users_pharmacy
-FOREIGN KEY (pharmacy_id) REFERENCES pharmacies(id);
+-- Add foreign key for user.pharmacy_id (after pharmacy table is created)
+ALTER TABLE user
+ADD CONSTRAINT fk_user_pharmacy
+FOREIGN KEY (pharmacy_id) REFERENCES pharmacy(id);

@@ -61,7 +61,7 @@ def health_check():
 @app.route("/medications", methods=["GET"])
 def get_medications():
     try:
-        response = supabase.table("medications").select("*").eq("is_otc", True).execute()
+        response = supabase.table("medication").select("*").eq("is_otc", True).execute()
         return jsonify(response.data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -77,7 +77,7 @@ def create_medication():
         data["is_otc"] = True
         data["requires_prescription"] = False
         
-        response = supabase.table("medications").insert(data).execute()
+        response = supabase.table("medication").insert(data).execute()
         return jsonify(response.data[0]), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -85,7 +85,7 @@ def create_medication():
 @app.route("/pharmacies", methods=["GET"])
 def get_pharmacies():
     try:
-        response = supabase.table("pharmacies").select("*").execute()
+        response = supabase.table("pharmacy").select("*").execute()
         return jsonify(response.data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -94,7 +94,7 @@ def get_pharmacies():
 def create_pharmacy():
     try:
         data = request.get_json()
-        response = supabase.table("pharmacies").insert(data).execute()
+        response = supabase.table("pharmacy").insert(data).execute()
         return jsonify(response.data[0]), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -105,7 +105,7 @@ def get_inventory():
     try:
         user_id = request.user_id
         
-        user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
+        user_response = supabase.table("user").select("pharmacy_id").eq("id", user_id).execute()
         
         if not user_response.data or not user_response.data[0].get("pharmacy_id"):
             return jsonify({"items": [], "needsSetup": True}), 200
@@ -124,7 +124,7 @@ def create_inventory():
     try:
         user_id = request.user_id
         
-        user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
+        user_response = supabase.table("user").select("pharmacy_id").eq("id", user_id).execute()
         
         if not user_response.data or not user_response.data[0].get("pharmacy_id"):
             return jsonify({"error": "Please set up your pharmacy first"}), 400
@@ -153,7 +153,7 @@ def delete_inventory(inventory_id):
         
         inventory_pharmacy_id = inventory_response.data[0]["pharmacy_id"]
         
-        user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
+        user_response = supabase.table("user").select("pharmacy_id").eq("id", user_id).execute()
         
         if not user_response.data or user_response.data[0].get("pharmacy_id") != inventory_pharmacy_id:
             return jsonify({"error": "Unauthorized"}), 403
@@ -170,7 +170,7 @@ def get_user():
     try:
         user_id = request.user_id
         
-        response = supabase.table("users").select("*").eq("id", user_id).execute()
+        response = supabase.table("user").select("*").eq("id", user_id).execute()
         
         if not response.data:
             return jsonify({"error": "User not found"}), 404
@@ -185,7 +185,7 @@ def setup_pharmacy():
     try:
         user_id = request.user_id
         
-        user_response = supabase.table("users").select("*").eq("id", user_id).execute()
+        user_response = supabase.table("user").select("*").eq("id", user_id).execute()
         
         if not user_response.data:
             return jsonify({"error": "User not found"}), 404
@@ -204,10 +204,10 @@ def setup_pharmacy():
             "onboarding_status": "active"
         }
         
-        pharmacy_response = supabase.table("pharmacies").insert(pharmacy_data).execute()
+        pharmacy_response = supabase.table("pharmacy").insert(pharmacy_data).execute()
         pharmacy_id = pharmacy_response.data[0]["id"]
         
-        supabase.table("users").update({
+        supabase.table("user").update({
             "pharmacy_id": pharmacy_id,
             "role": "pharmacy_owner"
         }).eq("id", user_id).execute()
@@ -230,7 +230,7 @@ def sync_user():
         if not firebase_uid or not email:
             return jsonify({"error": "firebase_uid and email are required"}), 400
         
-        existing_user = supabase.table("users").select("*").eq("id", firebase_uid).execute()
+        existing_user = supabase.table("user").select("*").eq("id", firebase_uid).execute()
         
         if existing_user.data:
             user = existing_user.data[0]
@@ -245,7 +245,7 @@ def sync_user():
                 "role": "customer"
             }
             
-            response = supabase.table("users").insert(new_user).execute()
+            response = supabase.table("user").insert(new_user).execute()
             return jsonify(response.data[0]), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
