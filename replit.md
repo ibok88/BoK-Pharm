@@ -40,17 +40,19 @@ Preferred communication style: Simple, everyday language.
 
 **Hybrid Node.js + Python Architecture:**
 - **Node.js Proxy Server (Port 5000):** Express-based proxy that forwards `/api` requests to Python backend
-- **Python Flask Server (Port 5001):** Handles all business logic, database operations, and API endpoints
-- **Rationale:** Leverages Python's strengths for data processing and API development while maintaining Node.js for frontend tooling
+- **Python FastAPI Server (Port 5001):** Modern async Python framework handling all business logic, database operations, and API endpoints
+- **Rationale:** FastAPI provides automatic OpenAPI documentation, async support, type validation with Pydantic, and better performance than Flask
 
-**API Routes (Python Flask):**
+**API Routes (Python FastAPI):**
 - `/api/health` - Health check endpoint
-- `/api/medications` - OTC medication catalog (GET/POST)
-- `/api/pharmacies` - Pharmacy directory (GET/POST)
-- `/api/inventory` - Inventory management (CRUD operations)
-- `/api/auth/user` - Current user retrieval
+- `/api/medications` - OTC medication catalog (GET, GET by ID)
+- `/api/pharmacies` - Pharmacy directory (GET, GET by ID)
+- `/api/cart` - Shopping cart management (GET, POST, PATCH, DELETE)
+- `/api/cart/add` - Add medication to cart
+- `/api/cart/items/{item_id}` - Update or delete cart item
+- `/api/auth/user` - Current user retrieval (authenticated)
 - `/api/auth/sync-user` - Firebase to Supabase user synchronization
-- `/api/auth/setup-pharmacy` - Pharmacy onboarding and assignment
+- `/api/google-maps-api-key` - Google Maps API key for frontend
 
 **Authentication Flow:**
 1. Client authenticates with Firebase (Google/Facebook OAuth)
@@ -61,11 +63,13 @@ Preferred communication style: Simple, everyday language.
 6. Subsequent requests include Firebase ID token for authorization
 
 **Database Schema (Supabase PostgreSQL):**
-- `users` - User profiles with role-based access (customer, pharmacy, delivery, admin)
-- `pharmacies` - Pharmacy locations with geospatial data and onboarding status
-- `medications` - OTC medication catalog with validation (`isOTC` field enforced)
-- `inventory` - Stock levels linking pharmacies to medications with pricing
-- `sessions` - Express session storage via connect-pg-simple
+- `user` - User profiles with Firebase UID, role-based access (customer, pharm, admin, delivery)
+- `pharmacy` - Pharmacy locations with geospatial data (lat/lng), license verification, opening hours
+- `medication` - OTC medication catalog with pricing, category, dosage information
+- `order` - Customer orders with status tracking (created, pending, confirmed, dispatched, delivered, cancelled, completed)
+- `order_item` - Line items for orders with medication details and pricing
+- `cart` - User shopping carts
+- `cart_item` - Cart line items with medication details and quantities
 
 **OTC Medication Validation:**
 - Schema-level validation using Zod ensures only OTC medications can be added
@@ -76,8 +80,9 @@ Preferred communication style: Simple, everyday language.
 
 **Authentication:**
 - **Firebase Authentication** - Social login (Google, Facebook) with JWT-based session management
-- Firebase Admin SDK for server-side token verification
+- Firebase Admin SDK for server-side token verification in FastAPI
 - Client SDK for OAuth flows and session persistence
+- All protected endpoints verify Firebase ID tokens before processing requests
 
 **Database:**
 - **Supabase** - Managed PostgreSQL database with REST API
@@ -85,8 +90,9 @@ Preferred communication style: Simple, everyday language.
 - Service key authentication for backend operations
 
 **Development Tools:**
-- **Drizzle ORM** - Type-safe database schema and migrations (configured but migration to Python in progress)
-- **Drizzle Kit** - Schema introspection and migration tooling
+- **SQLModel** - Pydantic-based ORM for type-safe database operations
+- **Uvicorn** - ASGI server for running FastAPI applications
+- **FastAPI** - Modern Python web framework with automatic API documentation
 
 **UI & Styling:**
 - **Tailwind CSS** - Utility-first styling framework
@@ -107,21 +113,32 @@ Preferred communication style: Simple, everyday language.
 - Service worker registration (configured)
 - Mobile viewport optimization
 
+**Maps & Geocoding:**
+- **Google Maps Places API** - Address autocomplete for delivery addresses
+- **Google Geocoding API** - Convert addresses to latitude/longitude coordinates
+- Custom AddressAutocomplete component for seamless integration
+
 **Environment Configuration:**
 - dotenv for environment variable management
-- Separate `.env` for local development
-- Firebase and Supabase credentials stored as environment variables
+- Replit Secrets for secure credential storage
+- Required environment variables:
+  - `VITE_FIREBASE_API_KEY` - Firebase web API key
+  - `VITE_FIREBASE_APP_ID` - Firebase application ID
+  - `VITE_FIREBASE_PROJECT_ID` - Firebase project ID
+  - `SUPABASE_URL` - Supabase project URL
+  - `SUPABASE_SERVICE_KEY` - Supabase service role key
+  - `GOOGLE_MAPS_API_KEY` - Google Maps API key for Places/Geocoding
 
 ### Key Architectural Decisions
 
 **Why Firebase + Supabase:**
 Firebase provides robust authentication with social login support, while Supabase offers a full PostgreSQL database with better relational data modeling. This combination provides best-of-breed solutions for auth and data persistence.
 
-**Why Python Backend:**
-Python Flask was chosen for the backend to provide cleaner API route handling and better integration with data processing libraries if needed for future analytics features. The Node.js proxy maintains compatibility with existing Vite tooling.
+**Why FastAPI Backend:**
+FastAPI was chosen for the backend to provide async performance, automatic API documentation (OpenAPI/Swagger), type safety with Pydantic models, and superior developer experience. The async capabilities enable better scalability for real-time features like order tracking. The Node.js proxy maintains compatibility with existing Vite tooling.
 
-**Why Drizzle (Partial Implementation):**
-Drizzle ORM is configured for type-safe schema definitions and PostgreSQL migrations. The migration from Node.js/Drizzle to Python/Supabase client is in progress, with schema definitions still maintained in TypeScript for type safety on the frontend.
+**Why SQLModel:**
+SQLModel combines Pydantic for data validation with SQLAlchemy for database operations, providing a unified type-safe approach to data modeling. Models are defined once and used for both API validation and database operations, reducing code duplication and ensuring consistency.
 
 **Mobile-First PWA Approach:**
 The application prioritizes mobile experience with bottom navigation, touch-friendly components, and responsive layouts that adapt to desktop screens. Progressive Web App features enable installation and offline capability.

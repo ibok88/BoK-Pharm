@@ -1,13 +1,13 @@
 -- Cart tables for BoK Pharm
 
-CREATE TABLE IF NOT EXISTS carts (
+CREATE TABLE IF NOT EXISTS cart (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   user_id VARCHAR NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS cart_items (
+CREATE TABLE IF NOT EXISTS cart_item (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
   cart_id VARCHAR NOT NULL,
   medication_id VARCHAR NOT NULL,
@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS cart_items (
   quantity INTEGER NOT NULL DEFAULT 1,
   unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0.0,
   total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.0,
-  FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
-  FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE
+  FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
+  FOREIGN KEY (medication_id) REFERENCES medication(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_carts_user_id ON carts(user_id);
-CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON cart_items(cart_id);
-CREATE INDEX IF NOT EXISTS idx_cart_items_medication_id ON cart_items(medication_id);
+CREATE INDEX IF NOT EXISTS idx_cart_user_id ON cart(user_id);
+CREATE INDEX IF NOT EXISTS idx_cart_item_cart_id ON cart_item(cart_id);
+CREATE INDEX IF NOT EXISTS idx_cart_item_medication_id ON cart_item(medication_id);

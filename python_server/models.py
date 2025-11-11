@@ -17,7 +17,7 @@ class OrderStatus(str, enum.Enum):
     completed = "completed"
 
 class User(SQLModel, table=True):
-    __tablename__ = "users"
+    __tablename__ = "user"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     firebase_uid: str
@@ -30,7 +30,7 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Pharmacy(SQLModel, table=True):
-    __tablename__ = "pharmacies"
+    __tablename__ = "pharmacy"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     name: str
@@ -50,7 +50,7 @@ class Pharmacy(SQLModel, table=True):
     created_at: datetime = Field(default=datetime.utcnow)
 
 class Medication(SQLModel, table=True):
-    __tablename__ = "medications"
+    __tablename__ = "medication"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     name: str
@@ -64,7 +64,7 @@ class Medication(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Order(SQLModel, table=True):
-    __tablename__ = "orders"
+    __tablename__ = "order"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     user_id: str = Field(index=True)
@@ -80,7 +80,7 @@ class Order(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class OrderItem(SQLModel, table=True):
-    __tablename__ = "order_items"
+    __tablename__ = "order_item"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     order_id: str = Field(index=True)
@@ -92,7 +92,7 @@ class OrderItem(SQLModel, table=True):
     total_price: float = 0.0
 
 class Cart(SQLModel, table=True):
-    __tablename__ = "carts"
+    __tablename__ = "cart"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     user_id: str = Field(index=True)
@@ -100,7 +100,7 @@ class Cart(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CartItem(SQLModel, table=True):
-    __tablename__ = "cart_items"
+    __tablename__ = "cart_item"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
     cart_id: str = Field(index=True)

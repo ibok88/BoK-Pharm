@@ -105,7 +105,7 @@ class AddToCartRequest(BaseModel):
 @app.get("/cart")
 async def get_cart(user_id: str = Depends(get_current_user)):
     try:
-        cart_response = supabase.table("carts").select("*").eq("user_id", user_id).execute()
+        cart_response = supabase.table("cart").select("*").eq("user_id", user_id).execute()
         
         if not cart_response.data:
             new_cart = {
@@ -113,11 +113,11 @@ async def get_cart(user_id: str = Depends(get_current_user)):
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
-            cart_response = supabase.table("carts").insert(new_cart).execute()
+            cart_response = supabase.table("cart").insert(new_cart).execute()
         
         cart = cart_response.data[0]
         
-        items_response = supabase.table("cart_items").select("*").eq("cart_id", cart["id"]).execute()
+        items_response = supabase.table("cart_item").select("*").eq("cart_id", cart["id"]).execute()
         
         return {
             "cart": cart,
@@ -130,7 +130,7 @@ async def get_cart(user_id: str = Depends(get_current_user)):
 @app.post("/cart/add")
 async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_current_user)):
     try:
-        cart_response = supabase.table("carts").select("*").eq("user_id", user_id).execute()
+        cart_response = supabase.table("cart").select("*").eq("user_id", user_id).execute()
         
         if not cart_response.data:
             new_cart = {
@@ -138,7 +138,7 @@ async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_curr
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
-            cart_response = supabase.table("carts").insert(new_cart).execute()
+            cart_response = supabase.table("cart").insert(new_cart).execute()
         
         cart = cart_response.data[0]
         
@@ -148,14 +148,14 @@ async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_curr
         
         medication = med_response.data[0]
         
-        existing_item = supabase.table("cart_items").select("*").eq("cart_id", cart["id"]).eq("medication_id", request.medication_id).execute()
+        existing_item = supabase.table("cart_item").select("*").eq("cart_id", cart["id"]).eq("medication_id", request.medication_id).execute()
         
         if existing_item.data:
             item = existing_item.data[0]
             new_quantity = item["quantity"] + request.quantity
             new_total = new_quantity * medication.get("price", 0)
             
-            updated = supabase.table("cart_items").update({
+            updated = supabase.table("cart_item").update({
                 "quantity": new_quantity,
                 "total_price": new_total
             }).eq("id", item["id"]).execute()
@@ -172,7 +172,7 @@ async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_curr
                 "total_price": request.quantity * medication.get("price", 0)
             }
             
-            result = supabase.table("cart_items").insert(new_item).execute()
+            result = supabase.table("cart_item").insert(new_item).execute()
             return result.data[0]
     except HTTPException:
         raise
@@ -182,17 +182,17 @@ async def add_to_cart(request: AddToCartRequest, user_id: str = Depends(get_curr
 @app.delete("/cart/items/{item_id}")
 async def remove_from_cart(item_id: str, user_id: str = Depends(get_current_user)):
     try:
-        item_response = supabase.table("cart_items").select("cart_id").eq("id", item_id).execute()
+        item_response = supabase.table("cart_item").select("cart_id").eq("id", item_id).execute()
         if not item_response.data:
             raise HTTPException(status_code=404, detail="Cart item not found")
         
         cart_id = item_response.data[0]["cart_id"]
-        cart_response = supabase.table("carts").select("user_id").eq("id", cart_id).execute()
+        cart_response = supabase.table("cart").select("user_id").eq("id", cart_id).execute()
         
         if not cart_response.data or cart_response.data[0]["user_id"] != user_id:
             raise HTTPException(status_code=403, detail="Unauthorized")
         
-        supabase.table("cart_items").delete().eq("id", item_id).execute()
+        supabase.table("cart_item").delete().eq("id", item_id).execute()
         return {"success": True}
     except HTTPException:
         raise
@@ -205,20 +205,20 @@ class UpdateCartItemRequest(BaseModel):
 @app.patch("/cart/items/{item_id}")
 async def update_cart_item(item_id: str, request: UpdateCartItemRequest, user_id: str = Depends(get_current_user)):
     try:
-        item_response = supabase.table("cart_items").select("*").eq("id", item_id).execute()
+        item_response = supabase.table("cart_item").select("*").eq("id", item_id).execute()
         if not item_response.data:
             raise HTTPException(status_code=404, detail="Cart item not found")
         
         item = item_response.data[0]
         cart_id = item["cart_id"]
         
-        cart_response = supabase.table("carts").select("user_id").eq("id", cart_id).execute()
+        cart_response = supabase.table("cart").select("user_id").eq("id", cart_id).execute()
         if not cart_response.data or cart_response.data[0]["user_id"] != user_id:
             raise HTTPException(status_code=403, detail="Unauthorized")
         
         new_total = request.quantity * item["unit_price"]
         
-        updated = supabase.table("cart_items").update({
+        updated = supabase.table("cart_item").update({
             "quantity": request.quantity,
             "total_price": new_total
         }).eq("id", item_id).execute()
