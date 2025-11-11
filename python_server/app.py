@@ -4,7 +4,10 @@ from flask_cors import CORS
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from typing import Optional, Dict, Any
+from functools import wraps
 import json
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
 
 load_dotenv()
 load_dotenv("../.env")
@@ -12,10 +15,44 @@ load_dotenv("../.env")
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://rpjsrnptvphtabpyyxtf.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwanNybnB0dnBodGFicHl5eHRmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTk2NTc5NywiZXhwIjoyMDc3NTQxNzk3fQ.yjy2FVK-cqU1WgXMJOx0T_kt_NnVrixNtXDOujGUodU")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables are required")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Initialize Firebase Admin SDK
+FIREBASE_PROJECT_ID = os.getenv("VITE_FIREBASE_PROJECT_ID")
+if not FIREBASE_PROJECT_ID:
+    raise ValueError("VITE_FIREBASE_PROJECT_ID environment variable is required")
+
+# Initialize Firebase Admin with minimal config (uses environment for credentials)
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(options={
+        'projectId': FIREBASE_PROJECT_ID
+    })
+
+def verify_firebase_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"error": "No valid authorization token provided"}), 401
+        
+        try:
+            id_token = auth_header.split('Bearer ')[1]
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            request.firebase_user = decoded_token
+            request.user_id = decoded_token['uid']
+            return f(*args, **kwargs)
+        except Exception as e:
+            print(f"Token verification error: {str(e)}")
+            return jsonify({"error": "Invalid authentication token"}), 401
+    
+    return decorated_function
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
@@ -63,12 +100,10 @@ def create_pharmacy():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/inventory", methods=["GET"])
+@verify_firebase_token
 def get_inventory():
     try:
-        user_id = request.headers.get("X-User-ID")
-        
-        if not user_id:
-            return jsonify({"items": [], "needsSetup": True}), 200
+        user_id = request.user_id
         
         user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
         
@@ -84,12 +119,10 @@ def get_inventory():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/inventory", methods=["POST"])
+@verify_firebase_token
 def create_inventory():
     try:
-        user_id = request.headers.get("X-User-ID")
-        
-        if not user_id:
-            return jsonify({"error": "Authentication required"}), 401
+        user_id = request.user_id
         
         user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
         
@@ -107,12 +140,23 @@ def create_inventory():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/inventory/<inventory_id>", methods=["DELETE"])
+@verify_firebase_token
 def delete_inventory(inventory_id):
     try:
-        user_id = request.headers.get("X-User-ID")
+        user_id = request.user_id
         
-        if not user_id:
-            return jsonify({"error": "Authentication required"}), 401
+        # Verify user owns this inventory item
+        inventory_response = supabase.table("inventory").select("pharmacy_id").eq("id", inventory_id).execute()
+        
+        if not inventory_response.data:
+            return jsonify({"error": "Inventory item not found"}), 404
+        
+        inventory_pharmacy_id = inventory_response.data[0]["pharmacy_id"]
+        
+        user_response = supabase.table("users").select("pharmacy_id").eq("id", user_id).execute()
+        
+        if not user_response.data or user_response.data[0].get("pharmacy_id") != inventory_pharmacy_id:
+            return jsonify({"error": "Unauthorized"}), 403
         
         response = supabase.table("inventory").delete().eq("id", inventory_id).execute()
         
@@ -121,12 +165,10 @@ def delete_inventory(inventory_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/auth/user", methods=["GET"])
+@verify_firebase_token
 def get_user():
     try:
-        user_id = request.headers.get("X-User-ID")
-        
-        if not user_id:
-            return jsonify({"error": "Not authenticated"}), 401
+        user_id = request.user_id
         
         response = supabase.table("users").select("*").eq("id", user_id).execute()
         
@@ -138,12 +180,10 @@ def get_user():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/auth/setup-pharmacy", methods=["POST"])
+@verify_firebase_token
 def setup_pharmacy():
     try:
-        user_id = request.headers.get("X-User-ID")
-        
-        if not user_id:
-            return jsonify({"error": "Authentication required"}), 401
+        user_id = request.user_id
         
         user_response = supabase.table("users").select("*").eq("id", user_id).execute()
         

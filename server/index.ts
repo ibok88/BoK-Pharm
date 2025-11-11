@@ -1,20 +1,75 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { setupVite, serveStatic, log } from "./vite";
+import { spawn, ChildProcess } from 'child_process';
 
 const app = express();
+
+let pythonProcess: ChildProcess | null = null;
+
+// Start Python backend
+function startPythonBackend() {
+  log("Starting Python backend on port 5001...");
+  
+  pythonProcess = spawn('python', ['app.py'], {
+    cwd: './python_server',
+    env: { ...process.env, PORT: '5001' },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  pythonProcess.stdout?.on('data', (data) => {
+    console.log(`[Python] ${data.toString().trim()}`);
+  });
+
+  pythonProcess.stderr?.on('data', (data) => {
+    console.error(`[Python Error] ${data.toString().trim()}`);
+  });
+
+  pythonProcess.on('error', (error) => {
+    console.error('Failed to start Python backend:', error);
+  });
+
+  pythonProcess.on('exit', (code) => {
+    if (code !== 0 && code !== null) {
+      console.error(`Python backend exited with code ${code}`);
+    }
+  });
+}
 
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
   }
 }
+
 app.use(express.json({
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+// Proxy /api requests to Python backend
+app.use('/api', createProxyMiddleware({
+  target: 'http://localhost:5001',
+  changeOrigin: true,
+  logLevel: 'silent',
+  onError: (err, req, res: any) => {
+    console.error('[Proxy Error]:', err.message);
+    res.status(503).json({ 
+      error: 'Backend service unavailable. Python backend may be starting up.' 
+    });
+  },
+  onProxyReq: (proxyReq, req) => {
+    // Pass through all headers
+    if (req.headers['x-user-id']) {
+      proxyReq.setHeader('X-User-ID', req.headers['x-user-id'] as string);
+    }
+    if (req.headers['authorization']) {
+      proxyReq.setHeader('Authorization', req.headers['authorization'] as string);
+    }
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -47,7 +102,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // Start Python backend first
+  startPythonBackend();
+  
+  // Wait a bit for Python to start
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  const server = app.listen({
+    port: 0,
+    host: "0.0.0.0",
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -57,25 +121,40 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup vite in development
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // Close the temporary server and start on the correct port
+  server.close();
+
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
+  const finalServer = app.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`Python backend proxied from http://localhost:5001`);
+  });
+
+  // Cleanup on exit
+  process.on('SIGTERM', () => {
+    if (pythonProcess) {
+      pythonProcess.kill('SIGTERM');
+    }
+    finalServer.close();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', () => {
+    if (pythonProcess) {
+      pythonProcess.kill('SIGINT');
+    }
+    finalServer.close();
+    process.exit(0);
   });
 })();
