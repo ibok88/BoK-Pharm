@@ -7,9 +7,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import heroImage from '@assets/stock_images/modern_well-lit_phar_d45252ec.jpg';
-import medicationImage1 from '@assets/generated_images/Medication_product_bottle_39d472bc.png';
-import medicationImage2 from '@assets/generated_images/Medication_blister_pack_8ebe3161.png';
+import heroImage from "@assets/stock_images/modern_well-lit_phar_d45252ec.jpg";
+import medicationImage1 from "@assets/generated_images/Medication_product_bottle_39d472bc.png";
+import medicationImage2 from "@assets/generated_images/Medication_blister_pack_8ebe3161.png";
 
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
@@ -32,7 +32,7 @@ export default function Home() {
       manufacturer: "Emzor Pharmaceuticals",
       price: 1200,
       originalPrice: 1500,
-      image: medicationImage1
+      image: medicationImage1,
     },
     {
       id: "2",
@@ -40,7 +40,7 @@ export default function Home() {
       strength: "250mg",
       manufacturer: "GSK Nigeria",
       price: 2500,
-      image: medicationImage2
+      image: medicationImage2,
     },
     {
       id: "3",
@@ -48,7 +48,7 @@ export default function Home() {
       strength: "400mg",
       manufacturer: "May & Baker",
       price: 1800,
-      image: medicationImage1
+      image: medicationImage1,
     },
     {
       id: "4",
@@ -57,8 +57,8 @@ export default function Home() {
       manufacturer: "HealthGuard",
       price: 3200,
       originalPrice: 4000,
-      image: medicationImage2
-    }
+      image: medicationImage2,
+    },
   ];
 
   const nearbyPharmacies = [
@@ -69,7 +69,7 @@ export default function Home() {
       deliveryTime: "15-20 min",
       phone: "+234 803 456 7890",
       availability: "in-stock" as const,
-      address: "23 Admiralty Way, Lekki Phase 1"
+      address: "23 Admiralty Way, Lekki Phase 1",
     },
     {
       name: "MedExpress",
@@ -78,7 +78,7 @@ export default function Home() {
       deliveryTime: "25-30 min",
       phone: "+234 810 234 5678",
       availability: "call-to-confirm" as const,
-      address: "15 Awolowo Road, Ikoyi"
+      address: "15 Awolowo Road, Ikoyi",
     },
     {
       name: "Care Pharmacy",
@@ -87,8 +87,8 @@ export default function Home() {
       deliveryTime: "35-40 min",
       phone: "+234 901 876 5432",
       availability: "in-stock" as const,
-      address: "8 Herbert Macaulay Street, Yaba"
-    }
+      address: "8 Herbert Macaulay Street, Yaba",
+    },
   ];
 
   return (
@@ -96,10 +96,15 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden" data-testid="button-menu">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              data-testid="button-menu"
+            >
               <Menu className="h-5 w-5" />
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <BoKPharmLogo />
             </div>
@@ -110,7 +115,12 @@ export default function Home() {
 
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                data-testid="button-cart"
+              >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -129,7 +139,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         <section className="relative rounded-lg overflow-hidden h-64 md:h-80 bg-white dark:bg-background">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroImage})` }}
           >
@@ -137,11 +147,12 @@ export default function Home() {
           </div>
           <div className="relative h-full flex flex-col justify-center px-6 md:px-12">
             <div className="mb-4">
-              <BoKPharmLogo className="text-primary dark:text-white mb-2" />
-              <Badge className="bg-primary text-primary-foreground border-0">24 Hours Supply</Badge>
+              <Badge className="bg-primary text-primary-foreground border-0">
+                24 Hours Supply
+              </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground dark:text-white">
-              Your Pharmacy by the Ocean
+              Your Pharmacies brought to you...
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground dark:text-white/90 mb-4">
               Quality medications delivered 24/7
@@ -155,7 +166,11 @@ export default function Home() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">Popular Medications</h2>
-            <Button variant="ghost" size="sm" data-testid="button-view-all-medications">
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid="button-view-all-medications"
+            >
               View All
             </Button>
           </div>
@@ -169,7 +184,11 @@ export default function Home() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">Nearby Pharmacies</h2>
-            <Button variant="ghost" size="sm" data-testid="button-view-all-pharmacies">
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid="button-view-all-pharmacies"
+            >
               View All
             </Button>
           </div>

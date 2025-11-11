@@ -54,11 +54,11 @@ def verify_firebase_token(f):
     
     return decorated_function
 
-@app.route("/api/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok", "message": "BoK Pharm Python Backend Running"}), 200
 
-@app.route("/api/medications", methods=["GET"])
+@app.route("/medications", methods=["GET"])
 def get_medications():
     try:
         response = supabase.table("medications").select("*").eq("is_otc", True).execute()
@@ -66,7 +66,7 @@ def get_medications():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/medications", methods=["POST"])
+@app.route("/medications", methods=["POST"])
 def create_medication():
     try:
         data = request.get_json()
@@ -82,7 +82,7 @@ def create_medication():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/pharmacies", methods=["GET"])
+@app.route("/pharmacies", methods=["GET"])
 def get_pharmacies():
     try:
         response = supabase.table("pharmacies").select("*").execute()
@@ -90,7 +90,7 @@ def get_pharmacies():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/pharmacies", methods=["POST"])
+@app.route("/pharmacies", methods=["POST"])
 def create_pharmacy():
     try:
         data = request.get_json()
@@ -99,7 +99,7 @@ def create_pharmacy():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/inventory", methods=["GET"])
+@app.route("/inventory", methods=["GET"])
 @verify_firebase_token
 def get_inventory():
     try:
@@ -118,7 +118,7 @@ def get_inventory():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/inventory", methods=["POST"])
+@app.route("/inventory", methods=["POST"])
 @verify_firebase_token
 def create_inventory():
     try:
@@ -139,7 +139,7 @@ def create_inventory():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/inventory/<inventory_id>", methods=["DELETE"])
+@app.route("/inventory/<inventory_id>", methods=["DELETE"])
 @verify_firebase_token
 def delete_inventory(inventory_id):
     try:
@@ -164,7 +164,7 @@ def delete_inventory(inventory_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/auth/user", methods=["GET"])
+@app.route("/auth/user", methods=["GET"])
 @verify_firebase_token
 def get_user():
     try:
@@ -179,7 +179,7 @@ def get_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/auth/setup-pharmacy", methods=["POST"])
+@app.route("/auth/setup-pharmacy", methods=["POST"])
 @verify_firebase_token
 def setup_pharmacy():
     try:
@@ -216,7 +216,7 @@ def setup_pharmacy():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/auth/sync-user", methods=["POST"])
+@app.route("/auth/sync-user", methods=["POST"])
 def sync_user():
     try:
         data = request.get_json()
