@@ -60,10 +60,14 @@ export const medications = pgTable("medications", {
   description: text("description"),
   formFactor: text("form_factor"),
   requiresPrescription: boolean("requires_prescription").notNull().default(false),
+  isOTC: boolean("is_otc").notNull().default(true),
 });
 
 export const insertMedicationSchema = createInsertSchema(medications).omit({
   id: true,
+}).refine((data) => data.isOTC === true, {
+  message: "Only over-the-counter (OTC) medications are allowed. Prescription medications cannot be added.",
+  path: ["isOTC"],
 });
 
 export type InsertMedication = z.infer<typeof insertMedicationSchema>;

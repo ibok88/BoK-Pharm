@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import OrderTracking from "@/pages/OrderTracking";
@@ -15,11 +15,22 @@ import InventoryOnboarding from "@/pages/InventoryOnboarding";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, loading } = useFirebaseAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!user ? (
         <Route path="/" component={Landing} />
       ) : (
         <>
