@@ -7,6 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@assets/stock_images/modern_pharmacy_inte_1e432251.jpg";
 import medicationImage1 from "@assets/generated_images/Medication_product_bottle_39d472bc.png";
 import medicationImage2 from "@assets/generated_images/Medication_blister_pack_8ebe3161.png";
@@ -22,7 +23,27 @@ function BoKPharmLogo({ className = "" }: { className?: string }) {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
-  const [cartCount] = useState(2);
+  const [cartCount, setCartCount] = useState(0);
+  const { toast } = useToast();
+
+  const handleAddToCart = async (id: string, quantity: number) => {
+    const medication = popularMedications.find(m => m.id === id);
+    if (!medication) return;
+
+    try {
+      setCartCount(prev => prev + quantity);
+      toast({
+        title: "Added to cart",
+        description: `${medication.name} (${quantity}x) added to cart`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const popularMedications = [
     {
@@ -176,7 +197,7 @@ export default function Home() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
             {popularMedications.map((med) => (
-              <MedicationCard key={med.id} {...med} />
+              <MedicationCard key={med.id} {...med} onAddToCart={handleAddToCart} />
             ))}
           </div>
         </section>
