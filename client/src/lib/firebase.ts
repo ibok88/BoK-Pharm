@@ -2,11 +2,11 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  apiKey: "AIzaSyD8zklanUhEE6SKBv8jZp_vW5xjrNuHtrw",
+  authDomain: `ibok-27898.firebaseapp.com`,
+  projectId: "ibok-27898",
   storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: "1:721930222826:web:d10f67ba4ab407ef5eab93",
 };
 
 const app = initializeApp(firebaseConfig);
