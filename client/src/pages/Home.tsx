@@ -7,7 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import heroImage from "@assets/stock_images/modern_well-lit_phar_d45252ec.jpg";
+import heroImage from "@assets/stock_images/modern_pharmacy_inte_1e432251.jpg";
 import medicationImage1 from "@assets/generated_images/Medication_product_bottle_39d472bc.png";
 import medicationImage2 from "@assets/generated_images/Medication_blister_pack_8ebe3161.png";
 
