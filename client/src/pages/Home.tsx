@@ -152,23 +152,17 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        <section className="relative rounded-lg overflow-hidden h-64 md:h-80 bg-white dark:bg-background">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImage})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/85 to-white/70 dark:from-black/70 dark:to-black/40" />
-          </div>
+        <section className="relative rounded-lg overflow-hidden h-64 md:h-80 bg-gradient-to-r from-primary/10 to-primary/5">
           <div className="relative h-full flex flex-col justify-center px-6 md:px-12">
             <div className="mb-4">
               <Badge className="bg-primary text-primary-foreground border-0">
                 24 Hours Supply
               </Badge>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground dark:text-white">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
               Your Pharmacies brought to you...
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground dark:text-white/90 mb-4">
+            <p className="text-lg md:text-xl text-muted-foreground mb-4">
               Quality medications delivered 24/7
             </p>
             <div className="max-w-md">

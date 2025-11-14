@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,12 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Pill, Clock, MapPin, Truck } from "lucide-react";
+import SearchBar from "@/components/SearchBar";
+import MedicationCard from "@/components/MedicationCard";
+import { Pill, Clock, MapPin, Truck, ShoppingCart } from "lucide-react";
 import { SiFacebook } from "react-icons/si";
 import { FcGoogle } from "react-icons/fc";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@assets/stock_images/modern_well-lit_phar_d45252ec.jpg";
 
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
@@ -28,6 +30,16 @@ function BoKPharmLogo({ className = "" }: { className?: string }) {
   );
 }
 
+interface Medication {
+  id: string;
+  name: string;
+  category: string;
+  strength: string;
+  manufacturer: string;
+  price: number;
+  description?: string;
+}
+
 export default function Landing() {
   const { signInWithGoogle, signInWithFacebook, signInWithEmail, signUpWithEmail } = useFirebaseAuth();
   const { toast } = useToast();
@@ -36,6 +48,30 @@ export default function Landing() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: medications = [], isLoading } = useQuery<Medication[]>({
+    queryKey: ['/api/medications'],
+  });
+
+  const filteredMedications = medications.filter(med =>
+    searchQuery === "" ||
+    med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    med.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    med.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleAddToCart = (id: string, quantity: number) => {
+    const medication = medications.find(m => m.id === id);
+    if (!medication) return;
+
+    setCartCount(prev => prev + quantity);
+    toast({
+      title: "Added to cart",
+      description: `${medication.name} (${quantity}x) added to cart`,
+    });
+  };
 
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
@@ -113,21 +149,42 @@ export default function Landing() {
               <BoKPharmLogo />
             </div>
 
+            <div className="flex-1 max-w-2xl hidden md:block">
+              <SearchBar 
+                onSearch={setSearchQuery}
+                placeholder="Search medications..."
+              />
+            </div>
+
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                data-testid="button-cart"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
             </div>
+          </div>
+
+          <div className="mt-3 md:hidden">
+            <SearchBar 
+              onSearch={setSearchQuery}
+              placeholder="Search medications..."
+            />
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <section className="relative rounded-lg overflow-hidden h-96 md:h-[500px] mb-12 bg-white dark:bg-background">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImage})` }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/85 to-white/70 dark:from-black/70 dark:to-black/40" />
-          </div>
+        <section className="relative rounded-lg overflow-hidden h-96 md:h-[500px] mb-12 bg-gradient-to-r from-primary/10 via-primary/5 to-background">
           <div className="relative h-full flex flex-col justify-center items-center text-center px-6">
             <div className="mb-4">
               <Badge className="bg-primary text-primary-foreground border-0 mb-6">
@@ -228,7 +285,7 @@ export default function Landing() {
                       <div className="text-center space-y-2">
                         <Button
                           type="button"
-                          variant="link"
+                          variant="ghost"
                           onClick={() => setIsSignUp(!isSignUp)}
                           className="text-sm"
                           data-testid="button-toggle-signup"
@@ -240,7 +297,7 @@ export default function Landing() {
                         <div>
                           <Button
                             type="button"
-                            variant="link"
+                            variant="ghost"
                             onClick={() => setShowEmailForm(false)}
                             className="text-sm"
                             data-testid="button-back-to-sso"
@@ -314,6 +371,66 @@ export default function Landing() {
               </CardHeader>
             </Card>
           </div>
+        </section>
+
+        <section className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">
+                {searchQuery ? "Search Results" : "Available Medications"}
+              </h2>
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? `Showing ${filteredMedications.length} result(s) for "${searchQuery}"`
+                  : "Browse our wide selection of OTC medications"}
+              </p>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+              <p className="mt-4 text-muted-foreground">Loading medications...</p>
+            </div>
+          ) : filteredMedications.length === 0 ? (
+            <div className="text-center py-12 bg-muted rounded-lg">
+              <Pill className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {searchQuery ? "No medications found" : "No medications available"}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? "Try adjusting your search query"
+                  : "Check back soon for new products"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+              {filteredMedications.slice(0, 12).map((med) => (
+                <MedicationCard
+                  key={med.id}
+                  id={med.id}
+                  name={med.name}
+                  strength={med.strength}
+                  manufacturer={med.manufacturer}
+                  price={med.price}
+                  onAddToCart={handleAddToCart}
+                  data-testid={`card-medication-${med.id}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredMedications.length > 12 && (
+            <div className="text-center mt-6">
+              <p className="text-muted-foreground mb-4">
+                Showing 12 of {filteredMedications.length} medications
+              </p>
+              <Button variant="outline" size="lg" data-testid="button-view-all">
+                View All Medications
+              </Button>
+            </div>
+          )}
         </section>
 
         <section className="text-center py-12 bg-muted rounded-lg">

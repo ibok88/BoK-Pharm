@@ -6,6 +6,8 @@ BoK Pharm is a Progressive Web Application (PWA) that enables customers to searc
 
 The application is built as a mobile-first PWA following design patterns from successful delivery platforms like UberEats and Bolt Food, combined with healthcare-appropriate Material Design principles for credibility and clarity.
 
+**Shopping Flow**: Users can browse and search all 128 medications on the landing page without authentication, add items to cart, but must sign in (via Google, Facebook, or email/password) to complete checkout. This reduces friction for browsing while ensuring secure order processing.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -55,12 +57,19 @@ Preferred communication style: Simple, everyday language.
 - `/api/google-maps-api-key` - Google Maps API key for frontend
 
 **Authentication Flow:**
-1. Client authenticates with Firebase (Google/Facebook OAuth)
+1. Client authenticates with Firebase (Google/Facebook OAuth or Email/Password)
 2. Client receives Firebase ID token
 3. Token sent in Authorization header to Python backend
 4. Python backend verifies token using Firebase Admin SDK
 5. User data synchronized to Supabase database
 6. Subsequent requests include Firebase ID token for authorization
+
+**Landing Page Experience (Unauthenticated Users):**
+- Full medication catalog browsing (128 OTC medications from Supabase)
+- Real-time search functionality across name, category, and manufacturer
+- Add-to-cart capability with visual cart count indicator
+- Three authentication options: Google SSO, Facebook SSO, Email/Password sign-in/sign-up
+- Checkout requires authentication (users prompted to sign in)
 
 **Database Schema (Supabase PostgreSQL):**
 - `user` - User profiles with Firebase UID, role-based access (customer, pharm, admin, delivery)
