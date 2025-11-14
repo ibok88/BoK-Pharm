@@ -8,9 +8,6 @@ import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@assets/stock_images/modern_pharmacy_inte_1e432251.jpg";
-import medicationImage1 from "@assets/generated_images/Medication_product_bottle_39d472bc.png";
-import medicationImage2 from "@assets/generated_images/Medication_blister_pack_8ebe3161.png";
 
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
@@ -53,7 +50,6 @@ export default function Home() {
       manufacturer: "Emzor Pharmaceuticals",
       price: 1200,
       originalPrice: 1500,
-      image: medicationImage1,
     },
     {
       id: "2",
@@ -61,7 +57,6 @@ export default function Home() {
       strength: "250mg",
       manufacturer: "GSK Nigeria",
       price: 2500,
-      image: medicationImage2,
     },
     {
       id: "3",
@@ -69,7 +64,6 @@ export default function Home() {
       strength: "400mg",
       manufacturer: "May & Baker",
       price: 1800,
-      image: medicationImage1,
     },
     {
       id: "4",
@@ -78,7 +72,6 @@ export default function Home() {
       manufacturer: "HealthGuard",
       price: 3200,
       originalPrice: 4000,
-      image: medicationImage2,
     },
   ];
 
