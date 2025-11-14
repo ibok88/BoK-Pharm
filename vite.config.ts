@@ -31,10 +31,18 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+
+  // ✅ FIXED PART: Add server + HMR config for Replit
   server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    host: true,
+    port: 3000,
+    strictPort: true,
+    hmr: {
+      protocol: "wss",
+      host: `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`,
+      port: 443,
+      clientPort: 443,
+      path: "/__vite/ws",
     },
   },
 });
