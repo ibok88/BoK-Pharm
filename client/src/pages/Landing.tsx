@@ -1,20 +1,26 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import ThemeToggle from "@/components/ThemeToggle";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import MedicationSearchBar from "@/components/MedicationSearchBar";
-import { Pill, Clock, MapPin, Truck, ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart, MapPin, Clock, Truck, Heart, User } from "lucide-react";
 import { SiFacebook } from "react-icons/si";
 import { FcGoogle } from "react-icons/fc";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
@@ -23,8 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-col items-center leading-none ${className}`}>
-      <span className="font-bold text-2xl tracking-tight">BoK</span>
-      <span className="font-semibold text-xs -mt-1">Pharm</span>
+      <span className="font-bold text-xl tracking-tight">BoK</span>
+      <span className="font-semibold text-[10px] -mt-0.5">Pharm</span>
     </div>
   );
 }
@@ -79,6 +85,7 @@ export default function Landing() {
     setIsSigningIn(true);
     try {
       await signInWithGoogle();
+      setShowAuthDialog(false);
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -94,6 +101,7 @@ export default function Landing() {
     setIsSigningIn(true);
     try {
       await signInWithFacebook();
+      setShowAuthDialog(false);
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -132,10 +140,12 @@ export default function Landing() {
         });
       }
       setShowAuthDialog(false);
+      setEmail("");
+      setPassword("");
     } catch (error: any) {
       toast({
         title: isSignUp ? "Sign up failed" : "Sign in failed",
-        description: error.message || "Please check your credentials and try again",
+        description: error.message || "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -145,268 +155,257 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <BoKPharmLogo />
-            </div>
+      {/* Uber Eats Style Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center gap-4 px-4">
+          {/* Burger Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" data-testid="button-menu">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Navigate BoK Pharm</SheetDescription>
+              </SheetHeader>
+              <nav className="flex flex-col gap-4 mt-8">
+                <Button variant="ghost" className="justify-start" data-testid="button-menu-home">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Home
+                </Button>
+                <Button variant="ghost" className="justify-start" data-testid="button-menu-orders">
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Orders
+                </Button>
+                <Button variant="ghost" className="justify-start" data-testid="button-menu-favorites">
+                  <Heart className="mr-2 h-4 w-4" />
+                  Favorites
+                </Button>
+                <Button variant="ghost" className="justify-start" data-testid="button-menu-account">
+                  <User className="mr-2 h-4 w-4" />
+                  Account
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowAuthDialog(true)}
-                data-testid="button-sign-in"
-              >
-                Sign In
-              </Button>
-              <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                data-testid="button-cart"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
-            </div>
+          {/* Logo */}
+          <BoKPharmLogo />
+
+          {/* Address Search - Center */}
+          <div className="flex-1 max-w-xl mx-4">
+            <AddressAutocomplete
+              value={deliveryAddress}
+              onChange={handleAddressSelect}
+              placeholder="Enter delivery address"
+              className="w-full"
+            />
+          </div>
+
+          {/* Login & Sign Up Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsSignUp(false);
+                setShowAuthDialog(true);
+              }}
+              data-testid="button-login"
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => {
+                setIsSignUp(true);
+                setShowAuthDialog(true);
+              }}
+              data-testid="button-signup"
+            >
+              Sign up
+            </Button>
+
+            {/* Cart */}
+            <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center" data-testid="text-cart-count">
+                  {cartCount}
+                </span>
+              )}
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <section className="relative rounded-lg overflow-hidden py-16 md:py-24 mb-12 bg-gradient-to-r from-primary/10 via-primary/5 to-background">
-          <div className="relative h-full flex flex-col justify-center items-center text-center px-6">
-            <div className="mb-4">
-              <Badge className="bg-primary text-primary-foreground border-0 mb-6">
-                24 Hours Supply
-              </Badge>
+      {/* Hero Section - Medication Search */}
+      <section className="bg-gradient-to-b from-muted/50 to-background py-20">
+        <div className="container px-4">
+          <div className="max-w-3xl mx-auto text-center space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                Order medications delivered to your door
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Search for over-the-counter medications from nearby pharmacies
+              </p>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-foreground dark:text-white">
-              Your Pharmacies right next to you
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground dark:text-white/90 mb-8 max-w-2xl">
-              Quality medications delivered to your doorstep, anytime, anywhere
-            </p>
-            
-            <div className="w-full max-w-2xl space-y-4">
-              <div className="bg-background/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <div>
-                  <Label htmlFor="delivery-address" className="text-left block mb-2 font-semibold">
-                    Enter delivery address
-                  </Label>
-                  <AddressAutocomplete
-                    value={deliveryAddress}
-                    onChange={handleAddressSelect}
-                    placeholder="Enter your delivery address"
-                    className="w-full"
-                  />
+
+            {/* Medication Search */}
+            <div className="max-w-2xl mx-auto">
+              {!deliveryAddress ? (
+                <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 text-sm text-yellow-800 dark:text-yellow-200">
+                  <MapPin className="inline h-4 w-4 mr-2" />
+                  Please enter your delivery address above to search for medications
                 </div>
-                
-                <div>
-                  <Label htmlFor="medication-search" className="text-left block mb-2 font-semibold">
-                    Search for medication
-                  </Label>
-                  <MedicationSearchBar
-                    onMedicationSelect={handleMedicationSelect}
-                    deliveryAddress={deliveryLocation}
-                    placeholder={deliveryAddress ? "Search medications available for delivery" : "Enter delivery address first"}
-                    className="w-full"
-                  />
-                  {!deliveryAddress && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Enter your delivery address to see available medications
-                    </p>
-                  )}
+              ) : (
+                <MedicationSearchBar
+                  onMedicationSelect={handleMedicationSelect}
+                  deliveryAddress={deliveryLocation}
+                  placeholder="Search for medications (e.g., Paracetamol, Ibuprofen)"
+                  data-testid="input-medication-search"
+                />
+              )}
+            </div>
+
+            {/* Features */}
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
+                <h3 className="font-semibold">Fast Delivery</h3>
+                <p className="text-sm text-muted-foreground">Get your medications in 30-60 minutes</p>
+              </div>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <MapPin className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold">Nearby Pharmacies</h3>
+                <p className="text-sm text-muted-foreground">Order from trusted local pharmacies</p>
+              </div>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Truck className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold">Track Your Order</h3>
+                <p className="text-sm text-muted-foreground">Real-time updates on your delivery</p>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {showAuthDialog && (
-          <div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
-            onClick={() => setShowAuthDialog(false)}
-            data-testid="auth-dialog-overlay"
-          >
-            <div className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {isSignUp ? "Create your account" : "Sign in to BoK Pharm"}
-                  </CardTitle>
-                  <CardDescription>
-                    {isSignUp
-                      ? "Start your journey with BoK Pharm"
-                      : "Welcome back! Choose your sign-in method"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isSigningIn}
-                        required
-                        data-testid="input-email"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={isSigningIn}
-                        required
-                        data-testid="input-password"
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSigningIn}
-                      data-testid="button-email-submit"
-                    >
-                      {isSigningIn ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
-                    </Button>
-                  </form>
+      {/* Auth Dialog */}
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-auth">
+          <DialogHeader>
+            <DialogTitle>{isSignUp ? "Sign up" : "Login"}</DialogTitle>
+            <DialogDescription>
+              {isSignUp ? "Create a new account to get started" : "Welcome back! Please login to continue"}
+            </DialogDescription>
+          </DialogHeader>
 
-                  <div className="relative my-4">
-                    <Separator />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-sm text-muted-foreground">
-                      or continue with
-                    </span>
-                  </div>
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                data-testid="input-email"
+              />
+            </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleGoogleSignIn}
-                      disabled={isSigningIn}
-                      data-testid="button-google-signin"
-                    >
-                      <FcGoogle className="mr-2 h-5 w-5" />
-                      Google
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleFacebookSignIn}
-                      disabled={isSigningIn}
-                      className="bg-[#1877F2] text-white hover:bg-[#1877F2]/90 border-[#1877F2]"
-                      data-testid="button-facebook-signin"
-                    >
-                      <SiFacebook className="mr-2 h-5 w-5" />
-                      Facebook
-                    </Button>
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                data-testid="input-password"
+              />
+            </div>
 
-                  <div className="text-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setIsSignUp(!isSignUp)}
-                      className="text-sm"
-                      data-testid="button-toggle-signup"
-                    >
-                      {isSignUp
-                        ? "Already have an account? Sign in"
-                        : "Don't have an account? Sign up"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSigningIn}
+              data-testid="button-submit-auth"
+            >
+              {isSigningIn ? "Please wait..." : isSignUp ? "Sign up" : "Login"}
+            </Button>
+          </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
-        )}
 
-        <section className="mb-16">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-4">Why Choose BoK Pharm?</h2>
-            <p className="text-muted-foreground text-lg">
-              Your health, our priority
-            </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGoogleSignIn}
+              disabled={isSigningIn}
+              data-testid="button-google-signin"
+            >
+              <FcGoogle className="mr-2 h-4 w-4" />
+              Google
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleFacebookSignIn}
+              disabled={isSigningIn}
+              data-testid="button-facebook-signin"
+            >
+              <SiFacebook className="mr-2 h-4 w-4 text-blue-600" />
+              Facebook
+            </Button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Clock className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>24/7 Service</CardTitle>
-                <CardDescription>
-                  Round-the-clock availability for all your medication needs
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Nearby Pharmacies</CardTitle>
-                <CardDescription>
-                  Find trusted pharmacies in your local area
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Truck className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Fast Delivery</CardTitle>
-                <CardDescription>
-                  Quick and reliable delivery right to your door
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Pill className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>OTC Medications</CardTitle>
-                <CardDescription>
-                  Wide selection of over-the-counter medications
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="text-center text-sm">
+            {isSignUp ? (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(false)}
+                  className="text-primary hover:underline"
+                  data-testid="button-switch-to-login"
+                >
+                  Login
+                </button>
+              </>
+            ) : (
+              <>
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(true)}
+                  className="text-primary hover:underline"
+                  data-testid="button-switch-to-signup"
+                >
+                  Sign up
+                </button>
+              </>
+            )}
           </div>
-        </section>
-
-        <section className="text-center py-12 bg-muted rounded-lg">
-          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-muted-foreground text-lg mb-6">
-            Sign in to browse medications and place your first order
-          </p>
-          <Button
-            size="lg"
-            onClick={() => setShowAuthDialog(true)}
-            className="w-full max-w-sm mx-auto"
-            data-testid="button-cta-signin"
-          >
-            Get Started
-          </Button>
-        </section>
-      </main>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
