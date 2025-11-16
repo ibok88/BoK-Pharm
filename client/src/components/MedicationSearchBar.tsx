@@ -33,6 +33,21 @@ export default function MedicationSearchBar({
   const { data: suggestions = [] } = useQuery<Medication[]>({
     queryKey: ['/api/medications/search', searchQuery, deliveryAddress],
     enabled: searchQuery.length >= 2,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('q', searchQuery);
+      
+      if (deliveryAddress?.lat && deliveryAddress?.lng) {
+        params.append('lat', deliveryAddress.lat.toString());
+        params.append('lng', deliveryAddress.lng.toString());
+      }
+      
+      const response = await fetch(`/api/medications/search?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to search medications');
+      }
+      return response.json();
+    },
   });
 
   useEffect(() => {
