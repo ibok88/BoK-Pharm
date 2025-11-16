@@ -66,6 +66,64 @@ async def get_medications():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/medications/search")
+async def search_medications(
+    q: str = "",
+    lat: Optional[float] = None,
+    lng: Optional[float] = None
+):
+    try:
+        if not q or len(q) < 2:
+            return []
+        
+        if lat is not None and lng is not None:
+            pharmacy_response = supabase.table("pharmacy").select("id, latitude, longitude").execute()
+            pharmacies = pharmacy_response.data
+            
+            nearby_pharmacy_ids = []
+            for pharmacy in pharmacies:
+                if pharmacy.get("latitude") and pharmacy.get("longitude"):
+                    distance = calculate_distance(
+                        lat, lng,
+                        pharmacy["latitude"], pharmacy["longitude"]
+                    )
+                    if distance <= 10:
+                        nearby_pharmacy_ids.append(pharmacy["id"])
+            
+            if not nearby_pharmacy_ids:
+                return []
+            
+            response = supabase.table("medication") \
+                .select("*") \
+                .or_(f"name.ilike.%{q}%,category.ilike.%{q}%,manufacturer.ilike.%{q}%") \
+                .limit(10) \
+                .execute()
+        else:
+            response = supabase.table("medication") \
+                .select("*") \
+                .or_(f"name.ilike.%{q}%,category.ilike.%{q}%,manufacturer.ilike.%{q}%") \
+                .limit(10) \
+                .execute()
+        
+        return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    from math import radians, sin, cos, sqrt, atan2
+    
+    R = 6371
+    
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
+    delta_lat = radians(lat2 - lat1)
+    delta_lng = radians(lng2 - lng1)
+    
+    a = sin(delta_lat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lng / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    return R * c
+
 @app.get("/medications/{medication_id}", response_model=Dict[str, Any])
 async def get_medication(medication_id: str):
     try:
