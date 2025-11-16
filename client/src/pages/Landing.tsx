@@ -256,18 +256,16 @@ export default function Landing() {
 
             {/* Medication Search */}
             <div className="max-w-2xl mx-auto">
-              {!deliveryAddress ? (
-                <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 text-sm text-yellow-800 dark:text-yellow-200">
-                  <MapPin className="inline h-4 w-4 mr-2" />
-                  Please enter your delivery address above to search for medications
-                </div>
-              ) : (
-                <MedicationSearchBar
-                  onMedicationSelect={handleMedicationSelect}
-                  deliveryAddress={deliveryLocation}
-                  placeholder="Search for medications (e.g., Paracetamol, Ibuprofen)"
-                  data-testid="input-medication-search"
-                />
+              <MedicationSearchBar
+                onMedicationSelect={handleMedicationSelect}
+                deliveryAddress={deliveryLocation}
+                placeholder="Search for medications (e.g., Paracetamol, Ibuprofen)"
+              />
+              {!deliveryAddress && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  <MapPin className="inline h-4 w-4 mr-1" />
+                  Enter your delivery address above to see nearby pharmacy availability
+                </p>
               )}
             </div>
 
