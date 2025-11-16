@@ -39,8 +39,9 @@ interface Medication {
   id: string;
   name: string;
   category: string;
-  strength: string;
-  manufacturer: string;
+  brand?: string;
+  generic?: string;
+  dosage?: string;
   price: number;
   description?: string;
 }

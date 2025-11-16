@@ -7,8 +7,9 @@ interface Medication {
   id: string;
   name: string;
   category: string;
-  manufacturer: string;
-  strength: string;
+  brand?: string;
+  generic?: string;
+  dosage?: string;
   price: number;
 }
 
@@ -109,7 +110,9 @@ export default function MedicationSearchBar({
             >
               <div className="font-medium">{medication.name}</div>
               <div className="text-sm text-muted-foreground">
-                {medication.strength} • {medication.manufacturer}
+                {medication.category}
+                {medication.dosage && ` • ${medication.dosage}`}
+                {medication.brand && ` • ${medication.brand}`}
               </div>
               <div className="text-sm font-semibold text-primary mt-1">
                 ₦{medication.price.toLocaleString()}

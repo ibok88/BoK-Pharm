@@ -106,10 +106,9 @@ async def search_medications(
                 if med and med.get("id") not in seen_ids:
                     name = med.get("name", "").lower()
                     category = med.get("category", "").lower()
-                    manufacturer = med.get("manufacturer", "").lower()
                     search_term = q.lower()
                     
-                    if search_term in name or search_term in category or search_term in manufacturer:
+                    if search_term in name or search_term in category:
                         medications.append(med)
                         seen_ids.add(med.get("id"))
                         if len(medications) >= 10:
@@ -119,7 +118,7 @@ async def search_medications(
         else:
             response = supabase.table("medication") \
                 .select("*") \
-                .or_(f"name.ilike.%{q}%,category.ilike.%{q}%,manufacturer.ilike.%{q}%") \
+                .or_(f"name.ilike.%{q}%,category.ilike.%{q}%") \
                 .limit(10) \
                 .execute()
             return response.data
