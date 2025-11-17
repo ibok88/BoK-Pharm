@@ -154,3 +154,22 @@ The application prioritizes mobile experience with bottom navigation, touch-frie
 
 **OTC-Only Restriction:**
 The platform restricts to OTC medications only to avoid regulatory complexity around prescription handling, ensuring legal compliance and simpler user flows without prescription verification requirements.
+
+## Recent Changes
+
+**November 17, 2025:**
+- Added pharmacy partner registration feature with backend API endpoint (`POST /api/pharmacies/register`)
+- Added delivery partner/courier registration with backend API (`POST /api/delivery-partners/register`)
+- Implemented "Partner with Us" section in burger menu with navigation to registration pages (`/register/pharmacy`, `/register/courier`)
+- Added user_id uniqueness validation to prevent duplicate registrations per user
+- Created registration forms with proper authentication flow, error handling, and Google Places autocomplete
+- Updated backend to return 409 status code for duplicate user registrations
+- Both registration endpoints update user role to `pharmacy_owner` or `delivery` upon successful registration
+- Added GET endpoints to retrieve user's pharmacy or delivery partner record (`/api/pharmacies/my`, `/api/delivery-partners/my`)
+
+**Features Added:**
+- Pharmacy registration collects: name, address (with autocomplete), city, state, country, lat/lng, email, phone, contact person, license number, opening hours
+- Courier registration collects: full name, email, phone, vehicle type (dropdown), vehicle plate number, driver's license number, coverage zones
+- Both registrations require authentication (Firebase ID token) before submission
+- Forms redirect to homepage with success toast after submission
+- Registration pages accessible to unauthenticated users (for viewing), but require auth to submit
