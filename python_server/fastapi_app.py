@@ -8,7 +8,7 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth
 from models import (
     User, Pharmacy, Medication, Order, OrderItem, 
-    Cart, CartItem, OrderStatus
+    Cart, CartItem, OrderStatus, DeliveryPartner, OnboardingStatus
 )
 from pydantic import BaseModel
 from datetime import datetime
@@ -350,6 +350,130 @@ async def get_user(user_id: str = Depends(get_current_user)):
         return response.data[0]
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RegisterPharmacyRequest(BaseModel):
+    name: str
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    email: str
+    phone: str
+    contact_person: Optional[str] = None
+    opening_hours: Optional[str] = "9:00 AM - 6:00 PM"
+    license_number: str
+
+@app.post("/pharmacies/register")
+async def register_pharmacy(request: RegisterPharmacyRequest, user_id: str = Depends(get_current_user)):
+    try:
+        # Check if user already has a pharmacy registration
+        user_pharmacy = supabase.table("pharmacy").select("*").eq("user_id", user_id).execute()
+        if user_pharmacy.data:
+            raise HTTPException(status_code=409, detail="You have already registered a pharmacy")
+        
+        # Check if email is already in use
+        existing = supabase.table("pharmacy").select("*").eq("email", request.email).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Pharmacy with this email already registered")
+        
+        new_pharmacy = {
+            "user_id": user_id,
+            "name": request.name,
+            "address": request.address,
+            "city": request.city,
+            "state": request.state,
+            "country": request.country,
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+            "email": request.email,
+            "phone": request.phone,
+            "contact_person": request.contact_person,
+            "opening_hours": request.opening_hours,
+            "license_number": request.license_number,
+            "onboarding_status": "pending",
+            "is_active": False,
+            "is_verified": False,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("pharmacy").insert(new_pharmacy).execute()
+        
+        supabase.table("user").update({"role": "pharmacy_owner"}).eq("firebase_uid", user_id).execute()
+        
+        return {"message": "Pharmacy registration submitted successfully", "pharmacy": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/pharmacies/my")
+async def get_my_pharmacy(user_id: str = Depends(get_current_user)):
+    try:
+        response = supabase.table("pharmacy").select("*").eq("user_id", user_id).execute()
+        if not response.data:
+            return None
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RegisterDeliveryPartnerRequest(BaseModel):
+    full_name: str
+    phone: str
+    email: str
+    vehicle_type: Optional[str] = None
+    vehicle_plate_number: Optional[str] = None
+    driver_license_number: str
+    coverage_zones: Optional[str] = None
+
+@app.post("/delivery-partners/register")
+async def register_delivery_partner(request: RegisterDeliveryPartnerRequest, user_id: str = Depends(get_current_user)):
+    try:
+        # Check if user already has a delivery partner registration
+        user_partner = supabase.table("delivery_partner").select("*").eq("user_id", user_id).execute()
+        if user_partner.data:
+            raise HTTPException(status_code=409, detail="You have already registered as a delivery partner")
+        
+        # Check if email is already in use
+        existing = supabase.table("delivery_partner").select("*").eq("email", request.email).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Delivery partner with this email already registered")
+        
+        new_partner = {
+            "user_id": user_id,
+            "full_name": request.full_name,
+            "phone": request.phone,
+            "email": request.email,
+            "vehicle_type": request.vehicle_type,
+            "vehicle_plate_number": request.vehicle_plate_number,
+            "driver_license_number": request.driver_license_number,
+            "coverage_zones": request.coverage_zones,
+            "onboarding_status": "pending",
+            "is_active": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("delivery_partner").insert(new_partner).execute()
+        
+        supabase.table("user").update({"role": "delivery"}).eq("firebase_uid", user_id).execute()
+        
+        return {"message": "Delivery partner registration submitted successfully", "partner": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/delivery-partners/my")
+async def get_my_delivery_partner(user_id: str = Depends(get_current_user)):
+    try:
+        response = supabase.table("delivery_partner").select("*").eq("user_id", user_id).execute()
+        if not response.data:
+            return None
+        return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

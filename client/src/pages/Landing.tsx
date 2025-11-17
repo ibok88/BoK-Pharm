@@ -189,6 +189,30 @@ export default function Landing() {
                   <User className="mr-2 h-4 w-4" />
                   Account
                 </Button>
+                
+                <Separator className="my-2" />
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-muted-foreground px-2">Partner with Us</p>
+                  <a href="/register/pharmacy" className="block">
+                    <Button
+                      variant="ghost"
+                      className="justify-start w-full"
+                      data-testid="button-menu-register-pharmacy"
+                    >
+                      Register a Pharmacy
+                    </Button>
+                  </a>
+                  <a href="/register/courier" className="block">
+                    <Button
+                      variant="ghost"
+                      className="justify-start w-full"
+                      data-testid="button-menu-register-courier"
+                    >
+                      Register as Courier
+                    </Button>
+                  </a>
+                </div>
               </nav>
             </SheetContent>
           </Sheet>

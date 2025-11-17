@@ -29,10 +29,16 @@ class User(SQLModel, table=True):
     role: str = Field(default="customer")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+class OnboardingStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
 class Pharmacy(SQLModel, table=True):
     __tablename__ = "pharmacy"
     
     id: str = Field(default_factory=gen_uuid, primary_key=True)
+    user_id: Optional[str] = None
     name: str
     address: str
     city: Optional[str] = None
@@ -42,11 +48,13 @@ class Pharmacy(SQLModel, table=True):
     longitude: Optional[float] = None
     email: str
     phone: str
+    contact_person: Optional[str] = None
     is_active: bool = True
     opening_hours: Optional[str] = None
     logo_url: Optional[str] = None
     license_number: str
     is_verified: bool = False
+    onboarding_status: str = "pending"
     created_at: datetime = Field(default=datetime.utcnow)
 
 class Medication(SQLModel, table=True):
@@ -110,3 +118,20 @@ class CartItem(SQLModel, table=True):
     quantity: int = 1
     unit_price: float = 0.0
     total_price: float = 0.0
+
+class DeliveryPartner(SQLModel, table=True):
+    __tablename__ = "delivery_partner"
+    
+    id: str = Field(default_factory=gen_uuid, primary_key=True)
+    user_id: str = Field(index=True)
+    full_name: str
+    phone: str
+    email: str
+    vehicle_type: Optional[str] = None
+    vehicle_plate_number: Optional[str] = None
+    driver_license_number: str
+    coverage_zones: Optional[str] = None
+    onboarding_status: str = "pending"
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

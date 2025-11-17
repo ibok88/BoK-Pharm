@@ -12,6 +12,8 @@ import PharmacyDashboard from "@/pages/PharmacyDashboard";
 import DeliveryDashboard from "@/pages/DeliveryDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import InventoryOnboarding from "@/pages/InventoryOnboarding";
+import RegisterPharmacy from "@/pages/RegisterPharmacy";
+import RegisterCourier from "@/pages/RegisterCourier";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +32,9 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/register/pharmacy" component={RegisterPharmacy} />
+      <Route path="/register/courier" component={RegisterCourier} />
+      
       {!user ? (
         <Route path="/" component={Landing} />
       ) : (
