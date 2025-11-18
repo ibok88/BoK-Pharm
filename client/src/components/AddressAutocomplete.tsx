@@ -4,16 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (address: string, details?: google.maps.places.PlaceResult) => void;
+  onChange: (address: string, details?: any) => void;
   placeholder?: string;
   className?: string;
 }
 
 export function AddressAutocomplete({ value, onChange, placeholder = "Enter delivery address", className }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null);
   
-  const { data: apiKeyData } = useQuery({
+  const { data: apiKeyData } = useQuery<{ apiKey: string }>({
     queryKey: ["/api/google-maps-api-key"],
   });
 
@@ -21,7 +21,7 @@ export function AddressAutocomplete({ value, onChange, placeholder = "Enter deli
     if (!apiKeyData?.apiKey || !inputRef.current || autocompleteRef.current) return;
 
     const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
+      if ((window as any).google && (window as any).google.maps) {
         initAutocomplete();
         return;
       }
@@ -37,6 +37,7 @@ export function AddressAutocomplete({ value, onChange, placeholder = "Enter deli
     const initAutocomplete = () => {
       if (!inputRef.current) return;
 
+      const google = (window as any).google;
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         types: ["address"],
         fields: ["formatted_address", "geometry", "address_components", "name"],
@@ -53,8 +54,8 @@ export function AddressAutocomplete({ value, onChange, placeholder = "Enter deli
     loadGoogleMaps();
 
     return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      if (autocompleteRef.current && (window as any).google) {
+        (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
   }, [apiKeyData, onChange]);

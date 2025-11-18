@@ -6,6 +6,8 @@ BoK Pharm is a Progressive Web Application (PWA) that enables customers to searc
 
 The application is built as a mobile-first PWA following design patterns from successful delivery platforms like UberEats and Bolt Food, combined with healthcare-appropriate Material Design principles for credibility and clarity.
 
+**Shopping Flow**: Users can browse and search all 128 medications on the landing page without authentication, add items to cart, but must sign in (via Google, Facebook, or email/password) to complete checkout. This reduces friction for browsing while ensuring secure order processing.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -55,12 +57,19 @@ Preferred communication style: Simple, everyday language.
 - `/api/google-maps-api-key` - Google Maps API key for frontend
 
 **Authentication Flow:**
-1. Client authenticates with Firebase (Google/Facebook OAuth)
+1. Client authenticates with Firebase (Google/Facebook OAuth or Email/Password)
 2. Client receives Firebase ID token
 3. Token sent in Authorization header to Python backend
 4. Python backend verifies token using Firebase Admin SDK
 5. User data synchronized to Supabase database
 6. Subsequent requests include Firebase ID token for authorization
+
+**Landing Page Experience (Unauthenticated Users):**
+- Full medication catalog browsing (128 OTC medications from Supabase)
+- Real-time search functionality across name, category, and manufacturer
+- Add-to-cart capability with visual cart count indicator
+- Three authentication options: Google SSO, Facebook SSO, Email/Password sign-in/sign-up
+- Checkout requires authentication (users prompted to sign in)
 
 **Database Schema (Supabase PostgreSQL):**
 - `user` - User profiles with Firebase UID, role-based access (customer, pharm, admin, delivery)
@@ -145,3 +154,22 @@ The application prioritizes mobile experience with bottom navigation, touch-frie
 
 **OTC-Only Restriction:**
 The platform restricts to OTC medications only to avoid regulatory complexity around prescription handling, ensuring legal compliance and simpler user flows without prescription verification requirements.
+
+## Recent Changes
+
+**November 17, 2025:**
+- Added pharmacy partner registration feature with backend API endpoint (`POST /api/pharmacies/register`)
+- Added delivery partner/courier registration with backend API (`POST /api/delivery-partners/register`)
+- Implemented "Partner with Us" section in burger menu with navigation to registration pages (`/register/pharmacy`, `/register/courier`)
+- Added user_id uniqueness validation to prevent duplicate registrations per user
+- Created registration forms with proper authentication flow, error handling, and Google Places autocomplete
+- Updated backend to return 409 status code for duplicate user registrations
+- Both registration endpoints update user role to `pharmacy_owner` or `delivery` upon successful registration
+- Added GET endpoints to retrieve user's pharmacy or delivery partner record (`/api/pharmacies/my`, `/api/delivery-partners/my`)
+
+**Features Added:**
+- Pharmacy registration collects: name, address (with autocomplete), city, state, country, lat/lng, email, phone, contact person, license number, opening hours
+- Courier registration collects: full name, email, phone, vehicle type (dropdown), vehicle plate number, driver's license number, coverage zones
+- Both registrations require authentication (Firebase ID token) before submission
+- Forms redirect to homepage with success toast after submission
+- Registration pages accessible to unauthenticated users (for viewing), but require auth to submit

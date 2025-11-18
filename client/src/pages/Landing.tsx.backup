@@ -1,0 +1,494 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import ThemeToggle from "@/components/ThemeToggle";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import MedicationSearchBar from "@/components/MedicationSearchBar";
+import MedicationCard from "@/components/MedicationCard";
+import { Pill, Clock, MapPin, Truck, ShoppingCart } from "lucide-react";
+import { SiFacebook } from "react-icons/si";
+import { FcGoogle } from "react-icons/fc";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { useToast } from "@/hooks/use-toast";
+
+function BoKPharmLogo({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex flex-col items-center leading-none ${className}`}>
+      <span className="font-bold text-2xl tracking-tight">BoK</span>
+      <span className="font-semibold text-xs -mt-1">Pharm</span>
+    </div>
+  );
+}
+
+interface Medication {
+  id: string;
+  name: string;
+  category: string;
+  strength: string;
+  manufacturer: string;
+  price: number;
+  description?: string;
+}
+
+export default function Landing() {
+  const { signInWithGoogle, signInWithFacebook, signInWithEmail, signUpWithEmail } = useFirebaseAuth();
+  const { toast } = useToast();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
+
+  const { data: medications = [], isLoading } = useQuery<Medication[]>({
+    queryKey: ['/api/medications'],
+  });
+
+  const handleAddressSelect = (address: string, place?: google.maps.places.PlaceResult) => {
+    setDeliveryAddress(address);
+    if (place?.geometry?.location) {
+      setDeliveryLocation({
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+      });
+    }
+  };
+
+  const handleMedicationSelect = (medication: Medication) => {
+    setSelectedMedication(medication);
+    toast({
+      title: "Medication selected",
+      description: medication.name,
+    });
+  };
+
+  const handleAddToCart = (id: string, quantity: number) => {
+    const medication = medications.find(m => m.id === id);
+    if (!medication) return;
+
+    setCartCount(prev => prev + quantity);
+    toast({
+      title: "Added to cart",
+      description: `${medication.name} (${quantity}x) added to cart`,
+    });
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Failed to sign in with Google",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signInWithFacebook();
+    } catch (error: any) {
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Failed to sign in with Facebook",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Missing information",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSigningIn(true);
+    try {
+      if (isSignUp) {
+        await signUpWithEmail(email, password);
+        toast({
+          title: "Account created",
+          description: "Welcome to BoK Pharm!",
+        });
+      } else {
+        await signInWithEmail(email, password);
+        toast({
+          title: "Signed in",
+          description: "Welcome back!",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: isSignUp ? "Sign up failed" : "Sign in failed",
+        description: error.message || "Please check your credentials and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <BoKPharmLogo />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowAuthDialog(true)}
+                data-testid="button-sign-in"
+              >
+                Sign In
+              </Button>
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                data-testid="button-cart"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <section className="relative rounded-lg overflow-hidden py-16 md:py-24 mb-12 bg-gradient-to-r from-primary/10 via-primary/5 to-background">
+          <div className="relative h-full flex flex-col justify-center items-center text-center px-6">
+            <div className="mb-4">
+              <Badge className="bg-primary text-primary-foreground border-0 mb-6">
+                24 Hours Supply
+              </Badge>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-foreground dark:text-white">
+              Your Pharmacies right next to you ...
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground dark:text-white/90 mb-8 max-w-2xl">
+              Quality medications delivered to your doorstep, anytime, anywhere
+            </p>
+            
+            <div className="w-full max-w-2xl space-y-4">
+              <div className="bg-background/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                <div>
+                  <Label htmlFor="delivery-address" className="text-left block mb-2">
+                    Enter delivery address
+                  </Label>
+                  <AddressAutocomplete
+                    value={deliveryAddress}
+                    onChange={handleAddressSelect}
+                    placeholder="Enter your delivery address"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="medication-search" className="text-left block mb-2">
+                    Search for medication
+                  </Label>
+                  <MedicationSearchBar
+                    onMedicationSelect={handleMedicationSelect}
+                    deliveryAddress={deliveryLocation}
+                    placeholder={deliveryAddress ? "Search medications available for delivery" : "Enter delivery address first"}
+                    className="w-full"
+                  />
+                  {!deliveryAddress && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Enter your delivery address to see available medications
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {showAuthDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="w-full max-w-md mx-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {isSignUp ? "Create your account" : "Sign in to BoK Pharm"}
+                  </CardTitle>
+                  <CardDescription>
+                    {isSignUp
+                      ? "Start your journey with BoK Pharm"
+                      : "Welcome back! Choose your sign-in method"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <form onSubmit={handleEmailAuth} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isSigningIn}
+                        required
+                        data-testid="input-email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isSigningIn}
+                        required
+                        data-testid="input-password"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSigningIn}
+                      data-testid="button-email-submit"
+                    >
+                      {isSigningIn ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+                    </Button>
+                  </form>
+
+                  <div className="relative my-4">
+                    <Separator />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-sm text-muted-foreground">
+                      or continue with
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleGoogleSignIn}
+                      disabled={isSigningIn}
+                      data-testid="button-google-signin"
+                    >
+                      <FcGoogle className="mr-2 h-5 w-5" />
+                      Google
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleFacebookSignIn}
+                      disabled={isSigningIn}
+                      className="bg-[#1877F2] text-white hover:bg-[#1877F2]/90 border-[#1877F2]"
+                      data-testid="button-facebook-signin"
+                    >
+                      <SiFacebook className="mr-2 h-5 w-5" />
+                      Facebook
+                    </Button>
+                  </div>
+
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setIsSignUp(!isSignUp)}
+                      className="text-sm"
+                      data-testid="button-toggle-signup"
+                    >
+                      {isSignUp
+                        ? "Already have an account? Sign in"
+                        : "Don't have an account? Sign up"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-16">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-4">Why Choose BoK Pharm?</h2>
+            <p className="text-muted-foreground text-lg">
+              Your health, our priority
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>24/7 Service</CardTitle>
+                <CardDescription>
+                  Round-the-clock availability for all your medication needs
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <MapPin className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Nearby Pharmacies</CardTitle>
+                <CardDescription>
+                  Find trusted pharmacies in your local area
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Truck className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Fast Delivery</CardTitle>
+                <CardDescription>
+                  Quick and reliable delivery right to your door
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Pill className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>OTC Medications</CardTitle>
+                <CardDescription>
+                  Wide selection of over-the-counter medications
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+
+        <section className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">
+                {searchQuery ? "Search Results" : "Available Medications"}
+              </h2>
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? `Showing ${filteredMedications.length} result(s) for "${searchQuery}"`
+                  : "Browse our wide selection of OTC medications"}
+              </p>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+              <p className="mt-4 text-muted-foreground">Loading medications...</p>
+            </div>
+          ) : filteredMedications.length === 0 ? (
+            <div className="text-center py-12 bg-muted rounded-lg">
+              <Pill className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {searchQuery ? "No medications found" : "No medications available"}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? "Try adjusting your search query"
+                  : "Check back soon for new products"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+              {filteredMedications.slice(0, 12).map((med) => (
+                <MedicationCard
+                  key={med.id}
+                  id={med.id}
+                  name={med.name}
+                  strength={med.strength}
+                  manufacturer={med.manufacturer}
+                  price={med.price}
+                  onAddToCart={handleAddToCart}
+                  data-testid={`card-medication-${med.id}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredMedications.length > 12 && (
+            <div className="text-center mt-6">
+              <p className="text-muted-foreground mb-4">
+                Showing 12 of {filteredMedications.length} medications
+              </p>
+              <Button variant="outline" size="lg" data-testid="button-view-all">
+                View All Medications
+              </Button>
+            </div>
+          )}
+        </section>
+
+        <section className="text-center py-12 bg-muted rounded-lg">
+          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+          <p className="text-muted-foreground text-lg mb-6">
+            Join thousands of customers who trust BoK Pharm for their medication
+            needs
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
+            <Button
+              size="lg"
+              onClick={handleGoogleSignIn}
+              disabled={isSigningIn}
+              className="w-full bg-white dark:bg-card text-foreground border hover-elevate"
+              data-testid="button-google-signin-cta"
+            >
+              <FcGoogle className="mr-2 h-5 w-5" />
+              Sign up with Google
+            </Button>
+            <Button
+              size="lg"
+              onClick={handleFacebookSignIn}
+              disabled={isSigningIn}
+              className="w-full bg-[#1877F2] text-white hover:bg-[#1877F2]/90"
+              data-testid="button-facebook-signin-cta"
+            >
+              <SiFacebook className="mr-2 h-5 w-5" />
+              Sign up with Facebook
+            </Button>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

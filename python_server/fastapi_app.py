@@ -8,7 +8,7 @@ import firebase_admin
 from firebase_admin import auth as firebase_auth
 from models import (
     User, Pharmacy, Medication, Order, OrderItem, 
-    Cart, CartItem, OrderStatus
+    Cart, CartItem, OrderStatus, DeliveryPartner, OnboardingStatus
 )
 from pydantic import BaseModel
 from datetime import datetime
@@ -65,6 +65,80 @@ async def get_medications():
         return response.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/medications/search")
+async def search_medications(
+    q: str = "",
+    lat: Optional[float] = None,
+    lng: Optional[float] = None
+):
+    try:
+        if not q or len(q) < 2:
+            return []
+        
+        if lat is not None and lng is not None:
+            pharmacy_response = supabase.table("pharmacy").select("id, latitude, longitude").execute()
+            pharmacies = pharmacy_response.data
+            
+            nearby_pharmacy_ids = []
+            for pharmacy in pharmacies:
+                if pharmacy.get("latitude") and pharmacy.get("longitude"):
+                    distance = calculate_distance(
+                        lat, lng,
+                        pharmacy["latitude"], pharmacy["longitude"]
+                    )
+                    if distance <= 10:
+                        nearby_pharmacy_ids.append(pharmacy["id"])
+            
+            if not nearby_pharmacy_ids:
+                return []
+            
+            inventory_response = supabase.table("inventory") \
+                .select("medication_id, medication:medication_id(*)") \
+                .in_("pharmacy_id", nearby_pharmacy_ids) \
+                .eq("in_stock", True) \
+                .execute()
+            
+            medications = []
+            seen_ids = set()
+            for inv_item in inventory_response.data:
+                med = inv_item.get("medication")
+                if med and med.get("id") not in seen_ids:
+                    name = med.get("name", "").lower()
+                    category = med.get("category", "").lower()
+                    search_term = q.lower()
+                    
+                    if search_term in name or search_term in category:
+                        medications.append(med)
+                        seen_ids.add(med.get("id"))
+                        if len(medications) >= 10:
+                            break
+            
+            return medications
+        else:
+            response = supabase.table("medication") \
+                .select("*") \
+                .or_(f"name.ilike.%{q}%,category.ilike.%{q}%") \
+                .limit(10) \
+                .execute()
+            return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    from math import radians, sin, cos, sqrt, atan2
+    
+    R = 6371
+    
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
+    delta_lat = radians(lat2 - lat1)
+    delta_lng = radians(lng2 - lng1)
+    
+    a = sin(delta_lat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lng / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    return R * c
 
 @app.get("/medications/{medication_id}", response_model=Dict[str, Any])
 async def get_medication(medication_id: str):
@@ -276,6 +350,130 @@ async def get_user(user_id: str = Depends(get_current_user)):
         return response.data[0]
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RegisterPharmacyRequest(BaseModel):
+    name: str
+    address: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    email: str
+    phone: str
+    contact_person: Optional[str] = None
+    opening_hours: Optional[str] = "9:00 AM - 6:00 PM"
+    license_number: str
+
+@app.post("/pharmacies/register")
+async def register_pharmacy(request: RegisterPharmacyRequest, user_id: str = Depends(get_current_user)):
+    try:
+        # Check if user already has a pharmacy registration
+        user_pharmacy = supabase.table("pharmacy").select("*").eq("user_id", user_id).execute()
+        if user_pharmacy.data:
+            raise HTTPException(status_code=409, detail="You have already registered a pharmacy")
+        
+        # Check if email is already in use
+        existing = supabase.table("pharmacy").select("*").eq("email", request.email).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Pharmacy with this email already registered")
+        
+        new_pharmacy = {
+            "user_id": user_id,
+            "name": request.name,
+            "address": request.address,
+            "city": request.city,
+            "state": request.state,
+            "country": request.country,
+            "latitude": request.latitude,
+            "longitude": request.longitude,
+            "email": request.email,
+            "phone": request.phone,
+            "contact_person": request.contact_person,
+            "opening_hours": request.opening_hours,
+            "license_number": request.license_number,
+            "onboarding_status": "pending",
+            "is_active": False,
+            "is_verified": False,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("pharmacy").insert(new_pharmacy).execute()
+        
+        supabase.table("user").update({"role": "pharmacy_owner"}).eq("firebase_uid", user_id).execute()
+        
+        return {"message": "Pharmacy registration submitted successfully", "pharmacy": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/pharmacies/my")
+async def get_my_pharmacy(user_id: str = Depends(get_current_user)):
+    try:
+        response = supabase.table("pharmacy").select("*").eq("user_id", user_id).execute()
+        if not response.data:
+            return None
+        return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RegisterDeliveryPartnerRequest(BaseModel):
+    full_name: str
+    phone: str
+    email: str
+    vehicle_type: Optional[str] = None
+    vehicle_plate_number: Optional[str] = None
+    driver_license_number: str
+    coverage_zones: Optional[str] = None
+
+@app.post("/delivery-partners/register")
+async def register_delivery_partner(request: RegisterDeliveryPartnerRequest, user_id: str = Depends(get_current_user)):
+    try:
+        # Check if user already has a delivery partner registration
+        user_partner = supabase.table("delivery_partner").select("*").eq("user_id", user_id).execute()
+        if user_partner.data:
+            raise HTTPException(status_code=409, detail="You have already registered as a delivery partner")
+        
+        # Check if email is already in use
+        existing = supabase.table("delivery_partner").select("*").eq("email", request.email).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Delivery partner with this email already registered")
+        
+        new_partner = {
+            "user_id": user_id,
+            "full_name": request.full_name,
+            "phone": request.phone,
+            "email": request.email,
+            "vehicle_type": request.vehicle_type,
+            "vehicle_plate_number": request.vehicle_plate_number,
+            "driver_license_number": request.driver_license_number,
+            "coverage_zones": request.coverage_zones,
+            "onboarding_status": "pending",
+            "is_active": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        response = supabase.table("delivery_partner").insert(new_partner).execute()
+        
+        supabase.table("user").update({"role": "delivery"}).eq("firebase_uid", user_id).execute()
+        
+        return {"message": "Delivery partner registration submitted successfully", "partner": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/delivery-partners/my")
+async def get_my_delivery_partner(user_id: str = Depends(get_current_user)):
+    try:
+        response = supabase.table("delivery_partner").select("*").eq("user_id", user_id).execute()
+        if not response.data:
+            return None
+        return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
