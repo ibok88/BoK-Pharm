@@ -8,7 +8,7 @@ import { ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@assets/stock_images/modern_pharmacy_inte_1e432251.jpg";
+import heroImage from "@assets/stock_images/BOK-Pharm.jpg";
 import medicationImage1 from "@assets/generated_images/Medication_product_bottle_39d472bc.png";
 import medicationImage2 from "@assets/generated_images/Medication_blister_pack_8ebe3161.png";
 

@@ -17,7 +17,7 @@ import { SiFacebook } from "react-icons/si";
 import { FcGoogle } from "react-icons/fc";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@assets/stock_images/modern_well-lit_phar_d45252ec.jpg";
+import heroImage from "@assets/stock_images/BOK-Pharm.jpg";
 
 function BoKPharmLogo({ className = "" }: { className?: string }) {
   return (
